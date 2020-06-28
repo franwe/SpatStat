@@ -97,7 +97,7 @@ For this task, we look at the Jura data, originally collected by the Swiss feder
 jura <- read.table("jura.txt", header = TRUE)
 head(jura)
 ```
-Now, we want our data to be saved as a SpatialPointsDataFrame, so we add coordinates (I keep `jura` just for convenience). Also, we generate a convex grid using the function `build.convex.grid` as a surface for predictions later and ensure that it is of class SpatialPoints:
+Now, we want our data to be saved as a SpatialPointsDataFrame, so we add coordinates (We keep `jura` just for convenience). Also, we generate a convex grid using the function `build.convex.grid` as a surface for predictions later and ensure that it is of class SpatialPoints:
 ```{r, fig.width=7, echo=T, warning=FALSE, message=FALSE, results="hide"}
 cj <- read.table("jura.txt", header = TRUE)
 coordinates(cj) = ~x+y
@@ -106,7 +106,7 @@ names(jg) <- c("x","y")
 jg <- SpatialPoints(jg)
 
 ```
-For this task, we only consider the concentration of nickel (`Ni`).To get a first impression, we map the measured concentration of nickel with `spplot` and `bubble` (the bubble plot is not very helpful in this display, but I did not want to include very big plots).
+For this task, we only consider the concentration of nickel (`Ni`).To get a first impression, we map the measured concentration of nickel with `spplot` and `bubble` (the bubble plot is not very helpful in this display, but we did not want to include very big plots).
 
 
 ```{r, fig.height= 3.5, fig.width= 3.5, echo = FALSE}
@@ -266,7 +266,7 @@ head(d)
 ```
 
 
-Now, we construct a map with the locations of the villages and the malaria prevalence using the **leaflet** package. However, this produces html-plots which I don't know how to display here. This is the code I used (which was already provided in the assignment):
+Now, we construct a map with the locations of the villages and the malaria prevalence using the **leaflet** package. However, this produces html-plots which we don't know how to display here. This is the code we used (which was already provided in the assignment):
 ```{r, eval=FALSE}
 pal <- colorBin("viridis", bins = c(0, 0.25, 0.5, 0.75, 1))
 leaflet(d) %>% 
