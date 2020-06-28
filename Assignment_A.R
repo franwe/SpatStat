@@ -7,6 +7,7 @@
 ################### THE JURA DATA ###################################################
 
 setwd("~/Uni/Semester_10/Spatial_Statistics/Assignment_A")
+setwd("~/SpatStat")
 source("build.convex.grid.R")
 
 library(gstat)
@@ -146,6 +147,11 @@ pl  <- proflik(ml, ju.geo,ill.values=seq(0.5, 1.5, l=4),
 
 plot(pl, nlevels = 16)
 
+# - REML (gstat::fit.variogram.reml)
+reml.fit <- fit.variogram.reml(log(Ni)~1, cj, jg, model = vgm(1, "Sph", range=5))
+
+?vgm
+
 # Perform a visual modelling using the eyefit funciton
 eyefit(vario1, silent = F)
 # Compare all results
@@ -227,7 +233,7 @@ head(d)
 # number of positive results out of N_i people sampled at s_i such that
 # logit(P(s_i)) = beta0 + beta1 * altitude + f(s_i)
 # where f(s_i) is a spatial random effect following a zero-mean Gaussian process
-# with Matérn covariance function
+# with Mat?rn covariance function
 library(INLA)
 
 # Define a mesh setting max.edge to c(0.1, 5) and cutoff to 0.01 using the INLA 

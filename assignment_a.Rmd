@@ -20,7 +20,8 @@ library(dplyr)
 library(rgdal)
 library(raster)
 library(INLA)
-setwd("~/Uni/Semester_10/Spatial_Statistics/Assignment_A")
+# setwd("~/Uni/Semester_10/Spatial_Statistics/Assignment_A")
+setwd("~/SpatStat")
 source("build.convex.grid.R")
 knitr::opts_chunk$set(fig.width=3, fig.height = 2.5)
 ```
@@ -228,6 +229,19 @@ pl  <- proflik(ml, ju.geo,ill.values=seq(0.5, 1.5, l=4),
                range.val=seq(0.1, .5, l=4))
 plot(pl, nlevels = 16)
 ```
+
+Use `gstat::fit.variogram.reml`:
+```{r, fig.width=3, fig.height=3}
+reml.fit <- fit.variogram.reml(log(Ni)~1, cj, jg, model = vgm(1, "Sph", range=5))
+plot(reml.fit, cutoff=8)
+```
+
+```{r, fig.width=3, fig.height=3}
+va3 <- variogram(log(Ni)~1, cj)
+plot(va3)
+```
+
+Why do they have totally different domain and values?
 
 Finally, on could perform a visual modelling using the `eyefit` funciton via
 ```{r, eval=FALSE}
