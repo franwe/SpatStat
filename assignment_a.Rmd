@@ -119,6 +119,7 @@ We could also compute distances (e.g. Euclidean distance) and look if there is a
 d <- dist(jura[1:2])
 xyplot(log(Ni) ~ sqrt(d), as.data.frame(jura))
 ```
+
 **Why does it not seem to be as if there is a relation? And what exactly was plotted here?**
 
 ### (Semi-)Variograms
@@ -129,8 +130,6 @@ v11.fit <- fit.variogram(v1, model = vgm(1, "Sph", 10, 1))
 v12.fit <- fit.variogram(v1, model = vgm(1, "Exp", 10, 1))
 v13.fit <- fit.variogram(v1, model = vgm(1, "Gau", 10, 1))
 v14.fit <- fit.variogram(v1, model = vgm(1, "Mat", 10, 1))
-v15.fit <- fit.variogram(v1, model = vgm("Nug"))
-v16.fit <- fit.variogram(v1, model = vgm("Lin"))
 ```
 ````{r, echo= FALSE}
 plot(v1, v11.fit, main = "Spherical")
