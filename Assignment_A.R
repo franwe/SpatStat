@@ -1,13 +1,12 @@
 #####################################################################################
 #                                                                                   #
-#     Assignemnt Block A : Bianca Neubert                                           #
+#     Assignemnt Block A : Bianca Neubert, Franziska Wehrmann                       #
 #                                                                                   #
 #####################################################################################
 
 ################### THE JURA DATA ###################################################
 
 setwd("~/Uni/Semester_10/Spatial_Statistics/Assignment_A")
-setwd("~/SpatStat")
 source("build.convex.grid.R")
 
 library(gstat)
@@ -149,8 +148,10 @@ plot(pl, nlevels = 16)
 
 # - REML (gstat::fit.variogram.reml)
 reml.fit <- fit.variogram.reml(log(Ni)~1, cj, jg, model = vgm(1, "Sph", range=5))
-
-?vgm
+plot(reml.fit, cutoff=8)
+va3 <- variogram(log(Ni)~1, cj)
+plot(va3)
+# Why are do they have totally different domain and values?
 
 # Perform a visual modelling using the eyefit funciton
 eyefit(vario1, silent = F)

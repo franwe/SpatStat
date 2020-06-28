@@ -1,6 +1,6 @@
 ---
 title: "Assignment Block A"
-author: "Bianca Neubert"
+author: "Bianca Neubert, Franziska Wehrmann"
 output: pdf_document
 header-includes:
    - \usepackage{ dsfont }
@@ -21,7 +21,6 @@ library(rgdal)
 library(raster)
 library(INLA)
 # setwd("~/Uni/Semester_10/Spatial_Statistics/Assignment_A")
-setwd("~/SpatStat")
 source("build.convex.grid.R")
 knitr::opts_chunk$set(fig.width=3, fig.height = 2.5)
 ```
@@ -241,7 +240,7 @@ va3 <- variogram(log(Ni)~1, cj)
 plot(va3)
 ```
 
-Why do they have totally different domain and values?
+**Why do they have totally different domain and values?** Semivariance with REML are probably scaled by 10, but the domain is still much larger. With a cutoff of 2, we would not see the the variogram reaching the sill yet. 
 
 Finally, on could perform a visual modelling using the `eyefit` funciton via
 ```{r, eval=FALSE}
