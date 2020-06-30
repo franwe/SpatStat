@@ -1,0 +1,57 @@
+---
+title: "Assignment Block B"
+author: "Bianca Neubert and Franziska Wehrmann"
+output: pdf_document
+header-includes:
+   - \usepackage{ dsfont }
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(rgdal)
+library(spdep)
+library(RColorBrewer)
+library(maps) 
+library(maptools)    
+library(sp)
+library(spdep)      
+library(gstat)        
+library(splancs)      
+library(spatstat)     
+library(pgirmess)     
+library(RColorBrewer) 
+library(classInt)     
+library(spgwr)        
+library(raster)
+knitr::opts_chunk$set(fig.width=3, fig.height = 2.5)
+```
+
+# Theory
+
+## Markov random fields
+Let Y denote a GMRF with mean vector \(\mu\) and precision matrix \(Q\).
+
+i) To show: \(\mathbb{E}[Y_i \vert Y_{-i}] = \mu_i - \frac{1}{q_{ii}} \sum_{j \in \text{ne}(i)} q_{ij} (y_j - \mu_j)\)
+
+Proof:
+
+ii) To show: \(\mathbb{V} [Y_i\vert Y_{-i}] = \frac{1}{q_{ii}}\)
+
+Proof:
+
+iii) To show: \(\mathbb{C}\text{or} [Y_i, Y_j \vert Y_{-ij}] = - \frac{q_{ij}}{\sqrt{q_{ii}q_{jj}}}\)
+
+Proof:
+
+## Local charcteristics
+Suppose \(S\) is a finite set equipped with a symmetry relation \(\sim\). For count outcomes, a specification commonly used in disease mapping is the *auto-Poisson* model where
+\begin{align*}
+\pi(y_i\vert y_{S\setminus i}) = \exp(-\mu_i)\frac{\mu_i^{y_i}}{y_i \!}\\
+\log(\mu_i) = - \sum_{j\in\text{ne}(i)} y_j \ i \not= j
+\end{align*}
+for \(y \in \mathbb{N}_0\), \(i \in S\). Determine the canonical potential with respect to \(a = 0\).
+
+# Computation
+
+## Guerry's data on social morals
+
