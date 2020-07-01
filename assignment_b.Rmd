@@ -29,15 +29,31 @@ knitr::opts_chunk$set(fig.width=3, fig.height = 2.5)
 # Theory
 
 ## Markov random fields
-Let Y denote a GMRF with mean vector \(\mu\) and precision matrix \(Q\).
+Let Y denote a GMRF with mean vector \(\mu\) and precision matrix \(Q\) of dimension \(n \in \mathbb{N}\).
 
-i) To show: \(\mathbb{E}[Y_i \vert Y_{-i}] = \mu_i - \frac{1}{q_{ii}} \sum_{j \in \text{ne}(i)} q_{ij} (y_j - \mu_j)\)
+i) To show: 
+\begin{align*}
+Y_i \vert Y_{-i} \sim \mathcal{N} \left( \mu_i - \frac{1}{q_{ii}} \sum_{j \in \text{ne}(i)} q_{ij} (y_j - \mu_j) , \frac{1}{q_{ii}} \right)
+\end{align*}
 
-Proof:
+**Proof**: Since \(Y\) is a GMRF with expectation \(\mu\) and precision matrix \(Q\), we have for the conditional density of \(Y_i \vert Y_{-i}\)
+$$\pi(y_i \vert y_{-i}) = \pi(y_i \vert y_{\text{ne}(i)})$$
+where \(y_{\text{ne}(i)}\) denotes the vector with indices in \(\text{ne}(i)\). Because the MRF is Gaussian, we have further for every \(A \subset \{1,...,n\}\)
+$$Y_A \sim \mathcal{N}(\mu_A, Q_A^{-1})$$
+where \(Y_A = (Y_i)_{i \in A}\), \(\mu_A = (\mu_i)_{i \in A}\) and \(Q_A = (q_{ij})_{i,j \in A}\) for the entries \(q_{ij}\) of \(Q\).
 
-ii) To show: \(\mathbb{V} [Y_i\vert Y_{-i}] = \frac{1}{q_{ii}}\)
+Combining this, we get for the density of \(Y_i \vert Y_{-i}\), since \(Y_{\text{ne}(i)}\) is also normally distributed and hence has strictly positive density, that
+\begin{align*}
+\pi(y_i \vert y_{-i}) &= \frac{\pi(y_{\{i\} \cup \text{ne}(i)})}{\pi(y_{\text{ne}(i)})}\\
+&\propto \exp \left\{ - \frac{1}{2} (y_{\{i\} \cup \text{ne}(i)} - \mu_{\{i\} \cup \text{ne}(i)})^{T} Q_{\{i\} \cup \text{ne}(i)} (y_{\{i\} \cup \text{ne}(i)} - \mu_{\{i\} \cup \text{ne}(i)}) \right.\\
+& \ \ \ \ \left.+\frac{1}{2} (y_{\text{ne}(i)} - \mu_{ \text{ne}(i)})^{T} Q_{\text{ne}(i)}(y_{\text{ne}(i)} - \mu_{\text{ne}(i)})   \right\} \\
+& = \exp \left\{  -  \frac{1}{2} \left[ q_{ii}y_{ii}^2 + 2 \sum_{j \in \text{ne}(i)} y_i q_{ij} y_j + q_{ii} \mu_i^2 + 2 \sum_{j \in \text{ne}(i)} \mu_i q_{ij} \mu_j \right. \right. \\
+ & \ \ \ \ \left. \left. - 2 q_{ii} \mu_i y_i - 2 \sum_{j \in \text{ne}(i)} \mu_i q_{ij} y_j  - 2 \sum_{j \in \text{ne}(i)} y_i q_{ij} \mu_j \right] \right\} \\
+ & = \exp \left\{ - \frac{q_{ii}}{2}  \left[ (y_i - \mu_i)^2 + \frac{2}{q_{ii}}(y_i - \mu_i)\sum_{j \in \text{ne}(i)}q_{ij}(y_j - \mu_j) \right] \right\} \\
+ & \propto \exp \left\{ - \frac{q_{ii}}{2} \left[  y_i - \mu_i + \frac{1}{q_{ii}} \sum_{j \in \text{ne}(i)} q_{ij} (y_j - \mu_j)  \right]^2 \right\}
+\end{align*}
+which is the kernel of a normal distribution with the given expecation and variance.
 
-Proof:
 
 iii) To show: \(\mathbb{C}\text{or} [Y_i, Y_j \vert Y_{-ij}] = - \frac{q_{ij}}{\sqrt{q_{ii}q_{jj}}}\)
 
