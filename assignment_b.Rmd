@@ -8,20 +8,20 @@ header-includes:
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(warning = FALSE)
+knitr::opts_chunk$set(message = FALSE)
+library(maps)         ## Projections
+library(maptools)     ## Data management
+library(sp)           ## Data management
+library(spdep)        ## Spatial autocorrelation
+library(gstat)        ## Geostatistics
+library(splancs)      ## Kernel Density
+library(spatstat)     ## Geostatistics
+library(pgirmess)     ## Spatial autocorrelation
+library(RColorBrewer) ## Visualization
 library(rgdal)
-library(spdep)
-library(RColorBrewer)
-library(maps) 
-library(maptools)    
-library(sp)
-library(spdep)      
-library(gstat)        
-library(splancs)      
-library(spatstat)     
-library(pgirmess)     
-library(RColorBrewer) 
-library(classInt)     
-library(spgwr)        
+library(classInt)     ## Class intervals
+library(spgwr)        ## GWR
 library(raster)
 knitr::opts_chunk$set(fig.width=3, fig.height = 2.5)
 ```
@@ -70,4 +70,144 @@ for \(y \in \mathbb{N}_0\), \(i \in S\). Determine the canonical potential with 
 # Computation
 
 ## Guerry's data on social morals
+This task is based on Guerry's data on moral statistics including aggregated numbers of suicide (`suicids`). Let us first import and inspect the data.
+```{r, warning=F}
+guerry <- readOGR("guerry/Guerry.shp")
+```
+We see that the variables are stored in form of strings, so we first change the class to integer of the three variables of interest in this assignment: `Suicids`, `Wealth` and `Clergy`
+```{r, warning=F}
+guerry$Suicids <- as.integer(guerry$Suicids)/10000
+guerry$Wealth <- as.integer(guerry$Wealth)
+guerry$Clergy <- as.integer(guerry$Clergy)
+```
+
+Using `spplot` we can get a first impression on the spatial distribution of these variables.
+
+
+```{r, fig.width=3, fig.height=3, echo= FALSE}
+spplot(guerry, "Wealth", main="Wealth")
+spplot(guerry, "Clergy", main="Clergy")
+spplot(guerry, "Suicids", main="Suicides [in 10.000]")
+```
+
+Specify a (non-spatial) regression model of `Wealth` and `Clergy` on `Suicids`.
+```{r}
+reg <- lm(Suicids ~ Wealth + Clergy, data=guerry)
+summary(reg)
+```
+We can see, that in this the coefficients of Clergy and Wealth are not significant which at first does not indicate a relationship between these and Suicides. This model does not explain the variation in Suicides very well (e.g. Multiple R-squared = 0.011).
+
+We can plot the residuals:
+
+```{r, echo = F, fig.width=9, fig.height=5}
+res <- reg$residuals
+res.palette <- colorRampPalette(c("red","orange","white", "lightgreen","green"), space = "rgb")
+pal <- res.palette(5)
+classes_fx <- classIntervals(res, n=5, rtimes = 1)
+cols <- findColours(classes_fx,pal)
+plot(guerry,col=cols, border="grey",pretty=T)
+legend(x="bottom",cex=1,fill=attr(cols,"palette"),bty="n",legend=names(attr(cols, "table")),title="Residuals from Linear Regression",ncol=5)
+```
+
+**TODO: Moron manual ?? Meinst du Moran's I :)**
+
+To test for autocorrelation in the data, we can use Moran's I and Geary's C. For this, we need to specify  a neighborhood structure in a matrix. 
+```{r, fig.width=4, fig.height=4}
+xy <- coordinates(guerry)
+W_cont_el <- poly2nb(guerry, queen=FALSE)
+W_cont_el_mat <- nb2listw(W_cont_el, style="B", zero.policy=TRUE)
+plot(W_cont_el_mat, coords=xy, cex=0.1, col="gray")
+```
+
+For the Moran's I ad Geary's C we get the following results
+```{r, echo=FALSE}
+moran.test(guerry$Suicids, listw=W_cont_el_mat, zero.policy=T)
+geary.test(guerry$Suicids, listw=W_cont_el_mat, zero.policy=T)
+```
+
+The Moran's I test statistic and its expectation are both close to zero (0.074 and -0.011). However, the Moran's I test statistic is larger than the expectation which is an indication for a positive autocorrelation. If we look the given p-value we can reject the null of no autocorrelation for a 0.1-niveau, but not for a 0.05-niveau. On the other hand, Geary's C is close to 1 and the p-value with 0.197 suggests that the null of no autocorrelation can not be rejeceted for a 0.1-niveau. To sum this up, there seems to be very little global autocorrelation in the data, if there is any at all. 
+
+**TODO: whats the difference? to moran below? , Interpretation**
+**Warum moran with residuals? mc nicht?**
+
+#### CAR
+Let us compute a CAR model.
+```{r}
+car.out <- spdep::spautolm(Suicids ~ Wealth + Clergy, data=guerry,
+                           listw=W_cont_el_mat, family="CAR")
+mod.car <- fitted(car.out)
+summary(car.out)
+```
+
+Again, the coefficients for Wealth and Clergy are not significant. The plot of the residuals:
+
+```{r, echo=FALSE, fig.width=5, fig.height=5}
+res <- car.out$fit$residuals
+m = max(-min(res), max(res))
+breaks = round(c(-m, -0.4*m, -0.1*m, 0.1*m, 0.4*m, m), digits=1)
+classes_fx <- classIntervals(res, n=5, style="fixed", fixedBreaks=breaks, rtimes = 1)
+cols <- findColours(classes_fx,pal)
+plot(guerry,col=cols, border="grey",pretty=T)
+legend(x="bottom",cex=1,fill=attr(cols,"palette"),bty="n",legend=names(attr(cols, "table")),
+       title="Residuals from CAR Model",ncol=5)
+
+```
+
+
+#### SAR
+Now, the same for SAR
+```{r}
+mod.sar <- lagsarlm(Suicids ~ Wealth + Clergy, data=guerry,
+                    listw=W_cont_el_mat, zero.policy=T, tol.solve=1e-12)
+summary(mod.sar)
+```
+
+Again, the coefficients for Wealth and Clergy are not significant.The plot of the residuals:
+
+```{r, echo=FALSE, fig.width=5, fig.height=5}
+res <- mod.sar$residuals
+m = max(-min(res), max(res))
+breaks = round(c(-m, -0.4*m, -0.1*m, 0.1*m, 0.4*m, m), digits=1)
+classes_fx <- classIntervals(res, n=5, style="fixed", fixedBreaks=breaks, rtimes = 1)
+cols <- findColours(classes_fx,pal)
+plot(guerry,col=cols, border="grey",pretty=T)
+legend(x="bottom",cex=1,fill=attr(cols,"palette"),bty="n",legend=names(attr(cols, "table")),
+       title="Residuals from SAR Model",ncol=5)
+
+```
+
+#### SDM
+And SDM
+```{r}
+mod.sdm <- lagsarlm(Suicids ~ Wealth + Clergy, data=guerry, listw=W_cont_el_mat, 
+                    zero.policy=T, type="mixed", tol.solve=1e-12)
+summary(mod.sdm)
+```
+
+```{r, echo=FALSE, fig.width=5, fig.height=5}
+res <- mod.sdm$residuals
+m = max(-min(res), max(res))
+breaks = round(c(-m, -0.4*m, -0.1*m, 0.1*m, 0.4*m, m), digits=1)
+classes_fx <- classIntervals(res, n=5, style="fixed", fixedBreaks=breaks, rtimes = 1)
+cols <- findColours(classes_fx,pal)
+plot(guerry,col=cols, border="grey")
+legend(x="bottom",cex=1,fill=attr(cols,"palette"),bty="n",legend=names(attr(cols, "table")),title="Residuals from SDM Model",ncol=5)
+```
+
+```{r, echo=FALSE, fig.width=5, fig.height=5}
+Original.plot.values <- spplot(guerry, "Suicids", main="Guerry Data [in 10.000]")
+guerry$CAR <- car.out$fit$fitted.values
+CAR.plot.values <- spplot(guerry, "CAR", main="CAR")
+guerry$SAR <- mod.sar$fitted.values
+SAR.plot.values <- spplot(guerry, "SAR", main="SAR")
+guerry$SDM <- mod.sdm$fitted.values
+SDM.plot.values <- spplot(guerry, "SDM", main="SDM")
+require(gridExtra)
+grid.arrange(Original.plot.values, 
+             CAR.plot.values, 
+             SAR.plot.values, 
+             SDM.plot.values, ncol = 2)
+```
+
+
 
