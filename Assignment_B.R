@@ -29,13 +29,13 @@ guerry <- readOGR("guerry/Guerry.shp")
 summary(guerry)
 names(guerry)
 
-guerry$Suicids <- as.integer(guerry$Suicids)/10000
+guerry$Suicids <- as.integer(guerry$Suicids)
 guerry$Wealth <- as.integer(guerry$Wealth)
 guerry$Clergy <- as.integer(guerry$Clergy)
 
 p1 <- spplot(guerry, "Wealth", main="Wealth")
 p2 <- spplot(guerry, "Clergy", main="Clergy")
-p3 <- spplot(guerry, "Suicids", main="Suicides [in 10.000]")
+p3 <- spplot(guerry, "Suicids", main="Suicides")
 
 require(gridExtra)
 grid.arrange(p1, p2, p3, ncol = 3)
@@ -46,16 +46,19 @@ reg <- lm(Suicids ~ Wealth + Clergy, data=guerry)
 summary(reg)
 
 ## Plot residuals
-res <- reg$residuals
+## fix color palette once for all plots of this type, for better comparison
+res.max = 98661.66  # maximum residual of (lm, car, sar, sdm)
 res.palette <- colorRampPalette(c("red","orange","white", "lightgreen","green"), space = "rgb")
 pal <- res.palette(5)
-classes_fx <- classIntervals(res, n=5, rtimes = 1)
-# classes_fx <- classIntervals(res, n=5, style="fixed", fixedBreaks=c(-50,-25,-5,5,25,50), rtimes = 1)
+m <- res.max
+breaks = round(c(-m, -0.4*m, -0.1*m, 0.1*m, 0.4*m, m), digits=0)
+
+res <- reg$residuals
+classes_fx <- classIntervals(res, n=5, style="fixed", fixedBreaks=breaks, rtimes = 1)
+cols <- findColours(classes_fx,pal)
 cols <- findColours(classes_fx,pal)
 plot(guerry,col=cols, border="grey",pretty=T)
 legend(x="bottom",cex=1,fill=attr(cols,"palette"),bty="n",legend=names(attr(cols, "table")),title="Residuals from SDM Model",ncol=5)
-
-# TODO: Moron manual
 
 ## Neighbors
 xy <- coordinates(guerry)
@@ -67,6 +70,7 @@ moran.test(res, listw=W_cont_el_mat, zero.policy=T)      # TODO: whats the diffe
 moran.test(guerry$Suicids, listw=W_cont_el_mat, zero.policy=T)  # TODO: Interpretation
 geary.test(guerry$Suicids, listw=W_cont_el_mat, zero.policy=T)
 
+
 # CAR - SAR - SDM
 
 ## CAR
@@ -77,8 +81,6 @@ print(car.out)
 summary(car.out)
 
 res <- car.out$fit$residuals
-m = max(-min(res), max(res))
-breaks = round(c(-m, -0.4*m, -0.1*m, 0.1*m, 0.4*m, m), digits=1)
 classes_fx <- classIntervals(res, n=5, style="fixed", fixedBreaks=breaks, rtimes = 1)
 cols <- findColours(classes_fx,pal)
 plot(guerry,col=cols, border="grey",pretty=T)
@@ -92,8 +94,6 @@ mod.sar <- lagsarlm(Suicids ~ Wealth + Clergy, data=guerry,
 summary(mod.sar)
 
 res <- mod.sar$residuals
-m = max(-min(res), max(res))
-breaks = round(c(-m, -0.4*m, -0.1*m, 0.1*m, 0.4*m, m), digits=1)
 classes_fx <- classIntervals(res, n=5, style="fixed", fixedBreaks=breaks, rtimes = 1)
 cols <- findColours(classes_fx,pal)
 plot(guerry,col=cols, border="grey",pretty=T)
@@ -107,17 +107,13 @@ mod.sdm <- lagsarlm(Suicids ~ Wealth + Clergy, data=guerry, listw=W_cont_el_mat,
 summary(mod.sdm)
 
 res <- mod.sdm$residuals
-m = max(-min(res), max(res))
-breaks = round(c(-m, -0.4*m, -0.1*m, 0.1*m, 0.4*m, m), digits=1)
 classes_fx <- classIntervals(res, n=5, style="fixed", fixedBreaks=breaks, rtimes = 1)
 cols <- findColours(classes_fx,pal)
 plot(guerry,col=cols, border="grey")
 legend(x="bottom",cex=1,fill=attr(cols,"palette"),bty="n",legend=names(attr(cols, "table")),title="Residuals from SDM Model",ncol=5)
 
-
-
 ## Plot values
-Original.plot.values <- spplot(guerry, "Suicids", main="Guerry Data [in 10.000]")
+Original.plot.values <- spplot(guerry, "Suicids", main="Guerry Data")
 guerry$CAR <- car.out$fit$fitted.values
 CAR.plot.values <- spplot(guerry, "CAR", main="CAR")
 guerry$SAR <- mod.sar$fitted.values
@@ -132,12 +128,12 @@ grid.arrange(Original.plot.values,
 
 
 
+res <- res.sdm
+print(max(-min(res), max(res)))
+  
+min(res)
 
-
-
-
-
-
+res.max = 98661.66  # maximum residual in (lm, car, sar, sdm)
 
 ## Versuch die residuals hübscher zu plotten und auch in einem Grid dar zu stellen. 
 ## p1 <- plot(...residuals...) gibt leider ein NULL-element zurück, somit kann 

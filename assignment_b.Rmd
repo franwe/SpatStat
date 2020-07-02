@@ -76,7 +76,7 @@ guerry <- readOGR("guerry/Guerry.shp")
 ```
 We see that the variables are stored in form of strings, so we first change the class to integer of the three variables of interest in this assignment: `Suicids`, `Wealth` and `Clergy`
 ```{r, warning=F}
-guerry$Suicids <- as.integer(guerry$Suicids)/10000
+guerry$Suicids <- as.integer(guerry$Suicids)
 guerry$Wealth <- as.integer(guerry$Wealth)
 guerry$Clergy <- as.integer(guerry$Clergy)
 ```
@@ -87,7 +87,7 @@ Using `spplot` we can get a first impression on the spatial distribution of thes
 ```{r, fig.width=3, fig.height=3, echo= FALSE}
 spplot(guerry, "Wealth", main="Wealth")
 spplot(guerry, "Clergy", main="Clergy")
-spplot(guerry, "Suicids", main="Suicides [in 10.000]")
+spplot(guerry, "Suicids", main="Suicides")
 ```
 
 Specify a (non-spatial) regression model of `Wealth` and `Clergy` on `Suicids`.
@@ -98,15 +98,24 @@ summary(reg)
 We can see, that in this the coefficients of Clergy and Wealth are not significant which at first does not indicate a relationship between these and Suicides. This model does not explain the variation in Suicides very well (e.g. Multiple R-squared = 0.011).
 
 We can plot the residuals:
+First, we fix color palette once for all plots of this type. This way it is easier to compare the results later.
+
+```{r}
+m = 98661.66  # maximum residual of (lm, car, sar, sdm)
+breaks = round(c(-m, -0.4*m, -0.1*m, 0.1*m, 0.4*m, m), digits=0)
+res.palette <- colorRampPalette(c("red","orange","white", "lightgreen","green"), space = "rgb")
+pal <- res.palette(5)
+```
+
+Now we can plot the residuals of the linear model.
 
 ```{r, echo = F, fig.width=9, fig.height=5}
 res <- reg$residuals
-res.palette <- colorRampPalette(c("red","orange","white", "lightgreen","green"), space = "rgb")
-pal <- res.palette(5)
-classes_fx <- classIntervals(res, n=5, rtimes = 1)
+classes_fx <- classIntervals(res, n=5, style="fixed", fixedBreaks=breaks, rtimes = 1)
+cols <- findColours(classes_fx,pal)
 cols <- findColours(classes_fx,pal)
 plot(guerry,col=cols, border="grey",pretty=T)
-legend(x="bottom",cex=1,fill=attr(cols,"palette"),bty="n",legend=names(attr(cols, "table")),title="Residuals from Linear Regression",ncol=5)
+legend(x="bottom",cex=1,fill=attr(cols,"palette"),bty="n",legend=names(attr(cols, "table")),title="Residuals from Linear Model",ncol=5)
 ```
 
 **TODO: Moron manual ?? Meinst du Moran's I :)**
@@ -141,16 +150,13 @@ summary(car.out)
 
 Again, the coefficients for Wealth and Clergy are not significant. The plot of the residuals:
 
-```{r, echo=FALSE, fig.width=5, fig.height=5}
+```{r, echo = F, fig.width=9, fig.height=5}
 res <- car.out$fit$residuals
-m = max(-min(res), max(res))
-breaks = round(c(-m, -0.4*m, -0.1*m, 0.1*m, 0.4*m, m), digits=1)
 classes_fx <- classIntervals(res, n=5, style="fixed", fixedBreaks=breaks, rtimes = 1)
 cols <- findColours(classes_fx,pal)
 plot(guerry,col=cols, border="grey",pretty=T)
 legend(x="bottom",cex=1,fill=attr(cols,"palette"),bty="n",legend=names(attr(cols, "table")),
        title="Residuals from CAR Model",ncol=5)
-
 ```
 
 
@@ -164,16 +170,13 @@ summary(mod.sar)
 
 Again, the coefficients for Wealth and Clergy are not significant.The plot of the residuals:
 
-```{r, echo=FALSE, fig.width=5, fig.height=5}
+```{r, echo = F, fig.width=9, fig.height=5}
 res <- mod.sar$residuals
-m = max(-min(res), max(res))
-breaks = round(c(-m, -0.4*m, -0.1*m, 0.1*m, 0.4*m, m), digits=1)
 classes_fx <- classIntervals(res, n=5, style="fixed", fixedBreaks=breaks, rtimes = 1)
 cols <- findColours(classes_fx,pal)
 plot(guerry,col=cols, border="grey",pretty=T)
 legend(x="bottom",cex=1,fill=attr(cols,"palette"),bty="n",legend=names(attr(cols, "table")),
        title="Residuals from SAR Model",ncol=5)
-
 ```
 
 #### SDM
@@ -184,10 +187,8 @@ mod.sdm <- lagsarlm(Suicids ~ Wealth + Clergy, data=guerry, listw=W_cont_el_mat,
 summary(mod.sdm)
 ```
 
-```{r, echo=FALSE, fig.width=5, fig.height=5}
+```{r, echo = F, fig.width=9, fig.height=5}
 res <- mod.sdm$residuals
-m = max(-min(res), max(res))
-breaks = round(c(-m, -0.4*m, -0.1*m, 0.1*m, 0.4*m, m), digits=1)
 classes_fx <- classIntervals(res, n=5, style="fixed", fixedBreaks=breaks, rtimes = 1)
 cols <- findColours(classes_fx,pal)
 plot(guerry,col=cols, border="grey")
@@ -195,7 +196,7 @@ legend(x="bottom",cex=1,fill=attr(cols,"palette"),bty="n",legend=names(attr(cols
 ```
 
 ```{r, echo=FALSE, fig.width=5, fig.height=5}
-Original.plot.values <- spplot(guerry, "Suicids", main="Guerry Data [in 10.000]")
+Original.plot.values <- spplot(guerry, "Suicids", main="Guerry Data")
 guerry$CAR <- car.out$fit$fitted.values
 CAR.plot.values <- spplot(guerry, "CAR", main="CAR")
 guerry$SAR <- mod.sar$fitted.values
@@ -210,4 +211,36 @@ grid.arrange(Original.plot.values,
 ```
 
 
+```{r, echo = F, fig.width=9, fig.height=4}
+res <- reg$residuals
+classes_fx <- classIntervals(res, n=5, style="fixed", fixedBreaks=breaks, rtimes = 1)
+cols <- findColours(classes_fx,pal)
+plot(guerry,col=cols, border="grey",pretty=T)
+legend(x="bottom",cex=1,fill=attr(cols,"palette"),bty="n",legend=names(attr(cols, "table")),title="Residuals from Linear Model",ncol=5)
+```
 
+```{r, echo = F, fig.width=9, fig.height=4}
+res <- car.out$fit$residuals
+classes_fx <- classIntervals(res, n=5, style="fixed", fixedBreaks=breaks, rtimes = 1)
+cols <- findColours(classes_fx,pal)
+plot(guerry,col=cols, border="grey",pretty=T)
+legend(x="bottom",cex=1,fill=attr(cols,"palette"),bty="n",legend=names(attr(cols, "table")),
+       title="Residuals from CAR Model",ncol=5)
+```
+
+```{r, echo = F, fig.width=9, fig.height=4}
+res <- mod.sar$residuals
+classes_fx <- classIntervals(res, n=5, style="fixed", fixedBreaks=breaks, rtimes = 1)
+cols <- findColours(classes_fx,pal)
+plot(guerry,col=cols, border="grey",pretty=T)
+legend(x="bottom",cex=1,fill=attr(cols,"palette"),bty="n",legend=names(attr(cols, "table")),
+       title="Residuals from SAR Model",ncol=5)
+```
+
+```{r, echo = F, fig.width=9, fig.height=4}
+res <- mod.sdm$residuals
+classes_fx <- classIntervals(res, n=5, style="fixed", fixedBreaks=breaks, rtimes = 1)
+cols <- findColours(classes_fx,pal)
+plot(guerry,col=cols, border="grey")
+legend(x="bottom",cex=1,fill=attr(cols,"palette"),bty="n",legend=names(attr(cols, "table")),title="Residuals from SDM Model",ncol=5)
+```
